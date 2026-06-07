@@ -1,0 +1,39 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Pytest / Coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Output / Logs
+*.log
+state_backup.json
+output/
+test_output/
+training_data.csv
+models/
+output.txt
+
+# OS generated
+.DS_Store
+Thumbs.db
+*.png
+*.docx

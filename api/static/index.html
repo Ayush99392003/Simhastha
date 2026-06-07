@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simhastha 2028 - Crowd Intelligence</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+    <style>
+        :root {
+            --bg-color: #0b0914;
+            --panel-bg: rgba(20, 18, 38, 0.65);
+            --border-color: rgba(255, 255, 255, 0.08);
+            --text-color: #f8fafc;
+            --critical-color: #ff2a5f;
+            --high-color: #ff8a00;
+            --medium-color: #ffc400;
+            --low-color: #00e6a8;
+            --accent-color: #a78bfa;
+            --accent-glow: rgba(167, 139, 250, 0.5);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        body {
+            background: radial-gradient(circle at top center, #1f1a36 0%, var(--bg-color) 50%, var(--bg-color) 100%);
+            color: var(--text-color);
+            padding: 24px;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Glassmorphism panel base */
+        .glass-panel {
+            background: var(--panel-bg);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        
+        .glass-panel:hover {
+            border-color: rgba(167, 139, 250, 0.3);
+            box-shadow: 0 12px 48px 0 rgba(0, 0, 0, 0.6);
+            transform: translateY(-2px);
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            padding: 16px 24px;
+            flex-shrink: 0;
+            animation: slideDown 0.6s ease-out;
+        }
+
+        h1 {
+            font-size: 24px;
+            font-weight: 600;
+            background: linear-gradient(to right, #fff, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: 0.5px;
+        }
+        
+        .subtitle {
+            font-size: 14px;
+            font-weight: 400;
+            color: #94a3b8;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-left: 10px;
+        }
+
+        .status-bar {
+            display: flex;
+            gap: 24px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .status-item {
+            color: #94a3b8;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-item span {
+            font-weight: 600;
+            color: var(--text-color);
+            padding: 4px 10px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        #val-connection {
+            color: var(--accent-color);
+            text-shadow: 0 0 8px var(--accent-glow);
+            transition: color 0.3s ease, text-shadow 0.3s ease;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: 380px 1fr 340px;
+            gap: 24px;
+            flex-grow: 1;
+            height: 0; /* Important for scrollable children */
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        .panel {
+            padding: 20px 24px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Graph container */
+        #network-graph {
+            flex-grow: 1;
+            width: 100%;
+            height: 100%;
+            min-height: 500px;
+            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255,255,255,0.05);
+            outline: none;
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.1);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.25);
+        }
+
+        h2 {
+            font-size: 15px;
+            color: #cbd5e1;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-shrink: 0;
+        }
+
+        h2::before {
+            content: '';
+            display: block;
+            width: 8px;
+            height: 8px;
+            background-color: var(--accent-color);
+            border-radius: 50%;
+            box-shadow: 0 0 10px var(--accent-glow);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+            table-layout: fixed;
+        }
+
+        th {
+            text-align: left;
+            padding: 12px 10px;
+            color: #94a3b8;
+            font-weight: 500;
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            background: rgba(15, 12, 27, 0.95);
+            z-index: 10;
+        tbody tr {
+            background: rgba(255, 255, 255, 0.02);
+            transition: transform 0.2s ease, background 0.2s ease;
+            border-radius: 6px;
+        }
+        
+        tbody tr:hover {
+            background: rgba(255, 255, 255, 0.05);
+            transform: translateX(2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            cursor: pointer;
+        }
+
+        td:first-child { border-top-left-radius: 6px; border-bottom-left-radius: 6px; font-weight: 500; }
+        td:last-child { border-top-right-radius: 6px; border-bottom-right-radius: 6px; }
+
+        .risk-badge {
+            padding: 3px 8px;
+            border-radius: 20px;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            display: inline-block;
+            text-shadow: none;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+
+        .alert-card {
+            background: linear-gradient(135deg, rgba(255, 51, 102, 0.15) 0%, rgba(255, 51, 102, 0.05) 100%);
+            border: 1px solid rgba(255, 51, 102, 0.3);
+            border-left: 4px solid var(--critical-color);
+            padding: 14px;
+            margin-bottom: 12px;
+            border-radius: 8px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .alert-card::after {
+            content: '';
+            position: absolute;
+            top: 0; left: -100%;
+            width: 50%; height: 100%;
+            background: linear-gradient(to right, transparent, rgba(255,255,255,0.1), transparent);
+            animation: shimmer 2s infinite;
+        }
+
+        .alert-card:hover {
+            transform: translateX(4px);
+            box-shadow: 0 4px 15px rgba(255, 51, 102, 0.15);
+        }
+
+        .alert-title {
+            font-weight: 600;
+            color: var(--critical-color);
+            margin-bottom: 6px;
+            font-size: 13px;
+        }
+
+        .alert-detail {
+            font-size: 12px;
+            color: #cbd5e1;
+            line-height: 1.4;
+        }
+        
+        .progress-bar-bg {
+            width: 100%; 
+            background: rgba(0,0,0,0.3); 
+            border-radius: 4px; 
+            height: 5px; 
+            margin-top: 4px;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+        
+        .progress-bar-fill {
+            height: 100%; 
+            border-radius: 4px;
+            transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.4s ease;
+            position: relative;
+        }
+
+        /* Animations */
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes shimmer {
+            100% { left: 200%; }
+        }
+
+        /* Responsive */
+        @media (max-width: 1280px) {
+            .dashboard {
+                grid-template-columns: 300px 1fr 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header class="glass-panel">
+        <h1>🕉️ Simhastha 2028 <span class="subtitle">Crowd Intelligence</span></h1>
+        <div class="status-bar">
+            <div class="status-item">Scenario: <span id="val-scenario">-</span></div>
+            <div class="status-item">Weather: <span id="val-weather">-</span></div>
+            <div class="status-item">Tick: <span id="val-tick">0</span></div>
+            <div class="status-item">Status: <span id="val-connection">Connecting...</span></div>
+        </div>
+    </header>
+
+    <div class="dashboard">
+        <!-- Left Panel: Node List -->
+        <div class="panel glass-panel">
+            <h2>Node List</h2>
+            <div style="flex-grow: 1; overflow-y: auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Node</th>
+                            <th>Occ. / Cap</th>
+                            <th>Risk</th>
+                        </tr>
+                    </thead>
+                    <tbody id="nodes-tbody">
+                        <tr><td colspan="3" style="text-align:center; color: #64748b; padding: 40px 0;">Waiting for data stream...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Center Panel: Network Graph -->
+        <div class="panel glass-panel" id="graph-panel" style="position: relative; display: flex; flex-direction: column;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2 style="margin: 0;">Live Flow Network</h2>
+                <button id="fullscreen-btn" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-family: 'Outfit'; font-size: 12px; transition: background 0.2s;">⛶ Expand</button>
+            </div>
+            
+            <div style="position: relative; flex-grow: 1; width: 100%; min-height: 500px;">
+                <div id="network-graph" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 8px; background: rgba(0, 0, 0, 0.2); border: 1px solid rgba(255,255,255,0.05); outline: none;"></div>
+                
+                <!-- Legend Overlay -->
+                <div id="graph-legend" style="position: absolute; top: 16px; left: 16px; z-index: 10; background: rgba(10, 10, 24, 0.85); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 12px 16px; color: #cbd5e1; font-size: 11px; backdrop-filter: blur(8px); pointer-events: none; box-shadow: 0 4px 16px rgba(0,0,0,0.5);">
+                    <div style="font-weight: 600; color: #fff; margin-bottom: 8px; letter-spacing: 0.5px;">MAP LEGEND</div>
+                    
+                    <div style="margin-bottom: 4px; color: #94a3b8; font-size: 10px; text-transform: uppercase;">Nodes (Risk)</div>
+                    <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 3px;"><span style="width: 10px; height: 10px; border-radius: 50%; background: #ff3366;"></span> Critical</div>
+                    <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 3px;"><span style="width: 10px; height: 10px; border-radius: 50%; background: #ff9933;"></span> High</div>
+                    <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 3px;"><span style="width: 10px; height: 10px; border-radius: 50%; background: #ffcc00;"></span> Medium</div>
+                    <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 8px;"><span style="width: 10px; height: 10px; border-radius: 50%; background: #00e6a8;"></span> Low</div>
+                    
+                    <div style="margin-bottom: 4px; color: #94a3b8; font-size: 10px; text-transform: uppercase;">Edges (Weight)</div>
+                    <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 3px;"><span style="width: 16px; height: 3px; background: #FF2D2D;"></span> &gt; 10 (Critical)</div>
+                    <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 3px;"><span style="width: 16px; height: 3px; background: #FF8C00;"></span> 5–10 (High)</div>
+                    <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 3px;"><span style="width: 16px; height: 3px; background: #FFD700;"></span> 2–5 (Medium)</div>
+                    <div style="display: flex; align-items: center; gap: 6px;"><span style="width: 16px; height: 3px; background: #444466;"></span> &lt; 2 (Low)</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column: Controls & Alerts -->
+        <div style="display: flex; flex-direction: column; gap: 24px; overflow: hidden;">
+            
+            <!-- Control Panel -->
+            <div class="panel glass-panel" style="flex: 0 0 auto; padding-bottom: 15px;">
+                <div id="controls-header" style="display: flex; justify-content: space-between; align-items: center; cursor: pointer;">
+                    <h2 style="margin: 0;">Simulation Controls</h2>
+                    <span id="controls-toggle-icon" style="color: #94a3b8; font-size: 12px; transition: transform 0.3s ease;">▼</span>
+                </div>
+                
+                <div id="controls-body" style="transition: max-height 0.3s ease, opacity 0.3s ease, margin-top 0.3s ease; max-height: 500px; opacity: 1; overflow: hidden; margin-top: 16px;">
+                    <div style="margin-bottom: 16px;">
+                        <label style="font-size: 11px; color: #94a3b8; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Scenario</label>
+                        <select id="control-scenario" style="width: 100%; padding: 8px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: #fff; border-radius: 4px; font-family: 'Outfit'; font-size: 13px; margin-top: 5px; cursor: pointer; outline: none;">
+                            <option value="normal_day">Normal Day</option>
+                            <option value="weekend">Weekend</option>
+                            <option value="parikrama">Parikrama</option>
+                            <option value="ekadashi">Ekadashi</option>
+                            <option value="festival_day">Festival Day</option>
+                            <option value="purnima">Purnima</option>
+                            <option value="somvati_amavasya">Somvati Amavasya</option>
+                            <option value="mahashivratri">Mahashivratri</option>
+                            <option value="shahi_snan">Shahi Snan (Max Load)</option>
+                            <option value="vip_visit">VIP Visit</option>
+                            <option disabled>── Crisis Events ──</option>
+                            <option value="stampede_rumor">Stampede Rumor</option>
+                            <option value="fire_breakout">Fire Breakout</option>
+                            <option value="structural_failure">Structural Failure</option>
+                        </select>
+                    </div>
+                    
+                    <div style="margin-bottom: 20px;">
+                        <label style="font-size: 11px; color: #94a3b8; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Weather</label>
+                        <select id="control-weather" style="width: 100%; padding: 8px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: #fff; border-radius: 4px; font-family: 'Outfit'; font-size: 13px; margin-top: 5px; cursor: pointer; outline: none;">
+                            <option value="clear">Clear</option>
+                            <option value="pleasant">Pleasant</option>
+                            <option value="hot_wave">Hot Wave</option>
+                            <option value="light_rain">Light Rain</option>
+                            <option value="heavy_rain">Heavy Rain</option>
+                            <option value="thunderstorm">Thunderstorm</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label style="font-size: 11px; color: #94a3b8; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; display: flex; justify-content: space-between;">
+                            <span>Tick Speed</span>
+                            <span id="tick-val-display" style="color: var(--accent-color);">30s</span>
+                        </label>
+                        <input type="range" id="control-tick" min="2" max="60" value="30" style="width: 100%; margin-top: 10px; cursor: pointer;">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Alerts Panel -->
+            <div class="panel glass-panel" style="flex: 1 1 0; overflow-y: hidden;">
+                <h2>Active Alerts</h2>
+                <div id="alerts-container" style="flex-grow: 1; overflow-y: auto;">
+                    <p style="font-size: 13px; color: #64748b; padding: 20px 0; text-align: center;">No active alerts.<br>All nodes operating safely.</p>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+    <script src="app.js?v=2"></script>
+</body>
+</html>
