@@ -1,3 +1,13 @@
+---
+title: Simhastha Crowd Intelligence
+emoji: 🕉️
+colorFrom: indigo
+colorTo: orange
+sdk: docker
+app_port: 7860
+pinned: false
+---
+
 # Simhastha 2028: Intelligent Crowd Flow & Route Optimization
 
 A live, modular, AI-driven pipeline designed for massive-scale crowd-flow prediction and route optimization for the Simhastha Ujjain 2028 festival (similar to Mahakumbh). 
