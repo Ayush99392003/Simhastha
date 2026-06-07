@@ -2,7 +2,7 @@
 title: Simhastha Crowd Intelligence
 emoji: 🕉️
 colorFrom: indigo
-colorTo: orange
+colorTo: red
 sdk: docker
 app_port: 7860
 pinned: false
