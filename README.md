@@ -32,24 +32,24 @@ This solution addresses the critical operational challenge of managing millions 
 
 ```mermaid
 graph TD
-    subgraph EdgeSensors ["Edge / Sensors"]
-        CCTV["Camera AI Edge"]
-        Gates["Gate Counters"]
-        GPS["Telecom GPS"]
-        Webhook["POST /api/ingest"]
+    subgraph Edge Sensors
+        CCTV[Camera AI Edge]
+        Gates[Gate Counters]
+        GPS[Telecom GPS]
+        Webhook[POST /api/ingest]
     end
 
-    subgraph Core ["Intelligence Core (pipeline.py)"]
-        Fusion["Confidence-Weighted Fusion Engine"]
-        ML["ML Time-Series Forecaster"]
-        Graph["NetworkX Dynamic Router"]
+    subgraph Intelligence Core
+        Fusion[Fusion Engine]
+        ML[ML Forecaster]
+        Graph[NetworkX Router]
     end
 
-    subgraph PresentationAPI ["Presentation & API"]
-        FastAPI["FastAPI Server"]
-        WS["Real-time WebSockets"]
-        CLI["Rich CLI Dashboard"]
-        Web["Dark-Mode Web Dashboard"]
+    subgraph Presentation API
+        FastAPI[FastAPI Server]
+        WS[Real-time WebSockets]
+        CLI[Rich CLI Dashboard]
+        Web[Web Dashboard]
     end
 
     CCTV --> Fusion
